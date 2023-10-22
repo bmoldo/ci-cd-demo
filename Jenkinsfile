@@ -1,7 +1,9 @@
 pipeline {
     agent any
     environment {
-        DOCKER_IMAGE = 'your-dockerhub-username/hello-world-app'
+        ECR_REGISTRY = '070503547773.dkr.ecr.eu-central-1.amazonaws.com'
+        ECR_REPOSITORY = 'ci-cd-demo'
+        DOCKER_IMAGE = "${ECR_REGISTRY}/${ECR_REPOSITORY}"
     }
     stages {
         stage('Docker Build') {
@@ -11,13 +13,19 @@ pipeline {
                 }
             }
         }
-        stage('Docker Push') {
+        stage('Docker Push to ECR') {
             steps {
-                withCredentials([string(credentialsId: 'dockerhub', variable: 'DOCKERHUB_TOKEN')]) {
+                withCredentials([[
+                    credentialsId: 'awsCredentials', 
+                    accessKeyVariable: 'AWS_ACCESS_KEY_ID', 
+                    secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
+                ]]) {
                     script {
-                        docker.withRegistry('https://index.docker.io/v1/', 'dockerhub') {
-                            docker.image("$DOCKER_IMAGE:latest").push()
-                        }
+                        // Login to ECR
+                        sh "eval \$(aws ecr get-login --region eu-central-1 --no-include-email)"
+                        
+                        // Push to ECR
+                        docker.image("$DOCKER_IMAGE:latest").push()
                     }
                 }
             }
