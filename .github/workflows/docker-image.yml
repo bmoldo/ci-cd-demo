@@ -47,6 +47,8 @@ jobs:
         aws ecr get-login-password --region eu-central-1 | docker login --username AWS --password-stdin 070503547773.dkr.ecr.eu-central-1.amazonaws.com
         docker pull 070503547773.dkr.ecr.eu-central-1.amazonaws.com/ci-cd-demo:latest
         docker stop web || true
+        sleep 10
         docker rm web || true
+        sleep 10
         docker run --name web -d -p 3000:3000 070503547773.dkr.ecr.eu-central-1.amazonaws.com/ci-cd-demo:latest
         ENDSSH
