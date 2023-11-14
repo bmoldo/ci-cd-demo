@@ -37,7 +37,7 @@ jobs:
     - name: Deploy to EC2
       env:
         SSH_KEY: ${{ secrets.BMOLDO_KEY }}
-        EC2_IP: your-ec2-instance-ip # Replace with your actual EC2 IP
+        EC2_IP: 18.197.29.1
       run: |
         mkdir -p ~/.ssh
         echo "$SSH_KEY" > ~/.ssh/id_rsa
