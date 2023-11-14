@@ -1,4 +1,4 @@
-name: Deploy to ECS
+name: Deploy to EC2
 
 on:
   push:
@@ -35,18 +35,19 @@ jobs:
         docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
         echo "::set-output name=image::$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
 
-    # - name: Fill in the new image ID in the ECS task definition
-    #   id: task-def
-    #   uses: aws-actions/amazon-ecs-render-task-definition@v1
-    #   with:
-    #     task-definition: task-definition.json
-    #     container-name: ci-demo
-    #     image: ${{ steps.build-image.outputs.image }}
-
-    # - name: Deploy Amazon ECS task definition
-    #   uses: aws-actions/amazon-ecs-deploy-task-definition@v1
-    #   with:
-    #     task-definition: ${{ steps.task-def.outputs.task-definition }}
-    #     service: ci-demo-svc
-    #     cluster: ci-demo
-    #     wait-for-service-stability: true
+   - name: Deploy to EC2
+      env:
+        SSH_KEY: ${{ secrets.BMOLDO_KEY }}
+        EC2_IP: 18.197.29.1 
+      run: |
+        mkdir -p ~/.ssh
+        echo "$SSH_KEY" > ~/.ssh/id_rsa
+        chmod 600 ~/.ssh/id_rsa
+        ssh-keyscan -H $EC2_IP >> ~/.ssh/known_hosts
+        ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa ec2-user@$EC2_IP << 'ENDSSH'
+        aws ecr get-login-password --region eu-central-1 | docker login --username AWS --password-stdin 070503547773.dkr.ecr.eu-central-1.amazonaws.com
+        docker pull 070503547773.dkr.ecr.eu-central-1.amazonaws.com/ci-cd-demo:latest
+        docker stop web || true
+        docker rm web || true
+        docker run --name web -d -p 3000:3000 070503547773.dkr.ecr.eu-central-1.amazonaws.com/ci-cd-demo:latest
+        ENDSSH
