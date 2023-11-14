@@ -54,6 +54,7 @@ jobs:
       env:
         SSH_KEY: ${{ secrets.BMOLDO_KEY }}
         EC2_IP: 18.197.29.1
+        IMAGE_TAG: ${{ github.sha }}
       run: |
         mkdir -p ~/.ssh
         echo "$SSH_KEY" > ~/.ssh/id_rsa
@@ -61,6 +62,5 @@ jobs:
         ssh-keyscan -H $EC2_IP >> ~/.ssh/known_hosts
         ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa ec2-user@$EC2_IP << 'ENDSSH'
         aws ecr get-login-password --region eu-central-1 | docker login --username AWS --password-stdin 070503547773.dkr.ecr.eu-central-1.amazonaws.com
-        docker pull 070503547773.dkr.ecr.eu-central-1.amazonaws.com/ci-cd-demo:latest
-        docker run --name web -d -p 3000:3000 070503547773.dkr.ecr.eu-central-1.amazonaws.com/ci-cd-demo:latest
-        ENDSSH
+        docker pull 070503547773.dkr.ecr.eu-central-1.amazonaws.com/ci-cd-demo:${{ github.sha }}
+        docker run --name web -d -p 3000:3000 070503547773.dkr.ecr.eu-central-1.amazonaws.com/ci-cd-demo:${{ github.sha }}
