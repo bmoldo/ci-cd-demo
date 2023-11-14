@@ -34,6 +34,22 @@ jobs:
         docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
         echo "::set-output name=image::$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
 
+    - name: Delete container 
+      env:
+        SSH_KEY: ${{ secrets.BMOLDO_KEY }}
+        EC2_IP: 18.197.29.1
+      run: |
+        mkdir -p ~/.ssh
+        echo "$SSH_KEY" > ~/.ssh/id_rsa
+        chmod 600 ~/.ssh/id_rsa
+        ssh-keyscan -H $EC2_IP >> ~/.ssh/known_hosts
+        ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa ec2-user@$EC2_IP << 'ENDSSH'
+        docker stop web || true
+        sleep 5
+        docker rm web || true
+        sleep 5
+        ENDSSH
+
     - name: Deploy to EC2
       env:
         SSH_KEY: ${{ secrets.BMOLDO_KEY }}
@@ -45,10 +61,6 @@ jobs:
         ssh-keyscan -H $EC2_IP >> ~/.ssh/known_hosts
         ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa ec2-user@$EC2_IP << 'ENDSSH'
         aws ecr get-login-password --region eu-central-1 | docker login --username AWS --password-stdin 070503547773.dkr.ecr.eu-central-1.amazonaws.com
-        docker stop web || true
-        sleep 5
-        docker rm web || true
-        sleep 5
         docker pull 070503547773.dkr.ecr.eu-central-1.amazonaws.com/ci-cd-demo:latest
         docker run --name web -d -p 3000:3000 070503547773.dkr.ecr.eu-central-1.amazonaws.com/ci-cd-demo:latest
         ENDSSH
