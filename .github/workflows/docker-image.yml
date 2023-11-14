@@ -27,7 +27,6 @@ jobs:
       id: build-image
       env:
         ECR_REGISTRY: 070503547773.dkr.ecr.eu-central-1.amazonaws.com
-        ECR_REGION: 
         ECR_REPOSITORY: ci-cd-demo
         IMAGE_TAG: ${{ github.sha }}
       run: |
@@ -35,10 +34,10 @@ jobs:
         docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
         echo "::set-output name=image::$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
 
-   - name: Deploy to EC2
+    - name: Deploy to EC2
       env:
         SSH_KEY: ${{ secrets.BMOLDO_KEY }}
-        EC2_IP: 18.197.29.1 
+        EC2_IP: your-ec2-instance-ip # Replace with your actual EC2 IP
       run: |
         mkdir -p ~/.ssh
         echo "$SSH_KEY" > ~/.ssh/id_rsa
